@@ -36,6 +36,7 @@ locals {
 
   }
 
+  task_role_arn = coalesce(var.task_role_arn, concat(aws_iam_role.task_role.*.arn, [""])[0])
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -43,7 +44,7 @@ resource "aws_ecs_task_definition" "this" {
   requires_compatibilities = var.requires_compatibilities
   network_mode             = "awsvpc"
 
-  task_role_arn      = var.task_role_arn
+  task_role_arn      = local.task_role_arn
   execution_role_arn = var.execution_role_arn
 
   cpu                   = var.cpu

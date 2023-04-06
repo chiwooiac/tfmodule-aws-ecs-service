@@ -1,6 +1,7 @@
 variable "task_role_arn" {
   description = "task_role_arn"
   type        = string
+  default     = null
 }
 
 variable "execution_role_arn" {
@@ -259,6 +260,12 @@ variable "propagate_tags" {
 
 variable "cloud_map_namespace_id" {
   description = "cloud_map_namespace_id of Cloud Map Service Discovery"
+  type        = string
+  default     = null
+}
+
+variable "task_policy_json" {
+  description = "task policy for task role"
   type        = string
   default     = null
 }
