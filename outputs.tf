@@ -5,5 +5,6 @@ output "ecs_task_definition_id" {
 
 output "ecs_service_id" {
   description = "ID of the ECS Application Service"
-  value       = concat(aws_ecs_service.this.id, [""])[0]
+  value       = aws_ecs_service.this.id
+  # value       = concat([aws_ecs_service.this.id], [""])[0]
 }
