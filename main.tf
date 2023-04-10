@@ -1,5 +1,7 @@
 locals {
-  service_name         = format("%s-%s", var.context.name_prefix, var.container_name)
+  task_name            = format("%s-%s-td", var.context.name_prefix, var.container_name)
+  service_name         = format("%s-%s-ecss", var.context.name_prefix, var.container_name)
+  container_name       = format("%s-%s-ecsc", var.context.name_prefix, var.container_name)
   service_discovery    = format("%s-%s", var.context.project, var.container_name)
   cwlog_grp_name       = format("/ecs/%s", local.service_name)
   enable_load_balancer = var.enable_load_balancer && var.target_group_arn != null && var.container_port > 0 ? true : false
@@ -17,7 +19,7 @@ locals {
   }
 
   container_definition = {
-    name         = local.service_name
+    name         = local.container_name
     image        = var.container_image
     essential    = var.essential
     memory       = var.memory
@@ -40,7 +42,7 @@ locals {
 }
 
 resource "aws_ecs_task_definition" "this" {
-  family                   = format("%s-ecs-td", local.service_name)
+  family                   = local.task_name
   requires_compatibilities = var.requires_compatibilities
   network_mode             = "awsvpc"
 
@@ -51,7 +53,8 @@ resource "aws_ecs_task_definition" "this" {
   memory                = var.memory
   container_definitions = "[${jsonencode(local.container_definition)}]"
 
-  tags = merge(var.context.tags, var.tags)
+  tags = merge(var.context.tags,
+    { Name = local.task_name }, var.tags)
 }
 
 resource "aws_ecs_service" "this" {
@@ -72,7 +75,7 @@ resource "aws_ecs_service" "this" {
   dynamic "load_balancer" {
     for_each = local.enable_load_balancer == true ? [1] : []
     content {
-      container_name   = local.service_name
+      container_name   = local.container_name
       container_port   = var.container_port
       target_group_arn = var.target_group_arn
     }
@@ -89,7 +92,8 @@ resource "aws_ecs_service" "this" {
   dynamic "service_registries" {
     for_each = var.cloud_map_namespace_id != null ? [1] : []
     content {
-      registry_arn = concat(aws_service_discovery_service.this.*.arn, [""])[0]
+      registry_arn   = concat(aws_service_discovery_service.this.*.arn, [""])[0]
+      container_name = local.service_name
     }
   }
 
@@ -122,4 +126,5 @@ resource "aws_service_discovery_service" "this" {
     }
     routing_policy = "MULTIVALUE"
   }
+
 }
